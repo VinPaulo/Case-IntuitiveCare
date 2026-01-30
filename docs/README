@@ -33,9 +33,14 @@ O sistema é dividido em três camadas principais:
 Localizado na pasta `BackEnd`.
 
 ```bash
-# Criar e ativar o ambiente virtual
-python -m venv venv
-source venv/bin/scripts/activate # Windows: venv\Scripts\activate
+# Criar o ambiente virtual
+python3 -m venv venv
+
+# Ativar o ambiente virtual
+# No Linux/macOS:
+source venv/bin/activate
+# No Windows:
+# venv\Scripts\activate
 
 # Instalar dependências
 pip install -r requirements.txt
@@ -51,12 +56,19 @@ Documentação interativa (Swagger): [http://127.0.0.1:8000/docs](http://127.0.0
 Localizado na pasta `FrontEnd`.
 
 ```bash
-# Instalar dependências e rodar
+# Instalar dependências
 npm install
+
+# Modo Desenvolvimento
 npm run serve
+
+# Modo Produção (Build e Deploy Local)
+npm run build
+npx serve -s dist
 ```
 
-Acesso local: [http://localhost:8080](http://localhost:8080)
+Acesso local (Desenv): [http://localhost:8080](http://localhost:8080)
+Acesso local (Produção): [http://localhost:3000](http://localhost:3000) (ou porta indicada pelo `serve`)
 
 ## 4. Decisões Técnicas e Trade-offs
 

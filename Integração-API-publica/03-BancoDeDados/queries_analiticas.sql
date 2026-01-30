@@ -1,65 +1,58 @@
--- 1. CRIAÇÃO DAS TABELAS
+DROP TABLE IF EXISTS despesas_agregadas;
+DROP TABLE IF EXISTS despesas_consolidadas;
+DROP TABLE IF EXISTS operadoras;
+
 
 CREATE TABLE operadoras (
-    registro_ans VARCHAR(20) PRIMARY KEY,
-    cnpj VARCHAR(14),
+    registro_operadora VARCHAR(20) PRIMARY KEY,
+    cnpj VARCHAR(20),
     razao_social VARCHAR(255),
+    nome_fantasia VARCHAR(255),
     modalidade VARCHAR(100),
-    uf CHAR(2)
+    logradouro VARCHAR(255),
+    numero VARCHAR(50),
+    complemento VARCHAR(255),
+    bairro VARCHAR(100),
+    cidade VARCHAR(100),
+    uf CHAR(2),
+    cep VARCHAR(20),
+    ddd VARCHAR(10),
+    telefone VARCHAR(20),
+    fax VARCHAR(20),
+    endereco_eletronico VARCHAR(255),
+    representante VARCHAR(255),
+    cargo_representante VARCHAR(255),
+    regiao_de_comercializacao VARCHAR(10),
+    data_registro_ans TIMESTAMP
 );
 
 CREATE TABLE despesas_consolidadas (
     id SERIAL PRIMARY KEY,
-    registro_ans VARCHAR(20),
+    cnpj VARCHAR(20),
+    registro_ans VARCHAR(20), 
     trimestre INT,
     ano INT,
-    valor_despesa DECIMAL(18,2), 
+    valordespesas DECIMAL(18,2), 
     descricao_conta VARCHAR(255),
-    FOREIGN KEY (registro_ans) REFERENCES operadoras(registro_ans)
+    FOREIGN KEY (registro_ans) REFERENCES operadoras(registro_operadora)
 );
 
 CREATE TABLE despesas_agregadas (
-    razao_social VARCHAR(255),
+    razaosocial VARCHAR(255),     
     uf CHAR(2),
-    total_despesas DECIMAL(18,2),
-    media_trimestral DECIMAL(18,2),
-    desvio_padrao DECIMAL(18,2),
-    PRIMARY KEY (razao_social, uf)
+    totaldespesas DECIMAL(20,2),   
+    mediatrimestral DECIMAL(20,2), 
+    desviopadrao DECIMAL(20,2),    
+    PRIMARY KEY (razaosocial, uf)
 );
+
 
 CREATE INDEX idx_despesas_reg_ans ON despesas_consolidadas(registro_ans);
 CREATE INDEX idx_despesas_periodo ON despesas_consolidadas(ano, trimestre);
-
--- 2. IMPORTAÇÃO DE DADOS 
-
-COPY operadoras(registro_ans, cnpj, razao_social, modalidade, uf) 
-FROM 'Integração-API-publica/02-Validação/cadastro_operadoras.csv' 
-DELIMITER ';' CSV HEADER ENCODING 'UTF8';
-
-UPDATE despesas_consolidadas 
-SET valor_despesa = CAST(REPLACE(valor_original_string, ',', '.') AS DECIMAL(18,2))
-WHERE valor_original_string IS NOT NULL;
+CREATE INDEX idx_despesas_cnpj ON despesas_consolidadas(cnpj);
 
 
-
--- QUERIES
-
-SELECT count(*) FROM operadoras;
-SELECT count(*) FROM despesas_consolidadas;
-SELECT count(*) FROM despesas_agregadas;
-
-SELECT razaosocial, totaldespesas 
-FROM despesas_agregadas 
-ORDER BY totaldespesas DESC 
-LIMIT 10;
-
-SELECT cnpj::text FROM despesas_consolidadas LIMIT 5;
-SELECT registro_operadora FROM operadoras LIMIT 5;
-
-SELECT registro_ans, razao_social FROM operadoras LIMIT 10;
-
--- 1 
-
+-- Query 1
 WITH despesas_2023 AS (
     SELECT
         CAST(cnpj AS TEXT) AS cod_ans,
@@ -87,24 +80,23 @@ FROM despesas_2023 d23
 INNER JOIN despesas_2025 d25
         ON d23.cod_ans = d25.cod_ans
 INNER JOIN operadoras o
-        ON CAST(o.registro_ans AS TEXT) = d23.cod_ans
+        ON CAST(o.registro_operadora AS TEXT) = d23.cod_ans
 ORDER BY crescimento_percentual DESC
 LIMIT 5;
 
--- 2
-
+-- Query 2
 SELECT 
     o.uf,
     SUM(d.valordespesas) AS despesa_total,
     AVG(d.valordespesas) AS media_por_operadora
 FROM despesas_consolidadas d
 INNER JOIN operadoras o 
-        ON CAST(o.registro_ans AS TEXT) = CAST(d.cnpj AS TEXT)
+        ON CAST(o.registro_operadora AS TEXT) = CAST(d.cnpj AS TEXT)
 GROUP BY o.uf
 ORDER BY despesa_total DESC
 LIMIT 5;
 
--- 3
+-- Query 3
 
 SELECT 
     o.razao_social, 
@@ -112,7 +104,7 @@ SELECT
     o.uf
 FROM despesas_consolidadas d
 INNER JOIN operadoras o 
-        ON CAST(o.registro_ans AS TEXT) = CAST(d.cnpj AS TEXT)
+        ON CAST(o.registro_operadora AS TEXT) = CAST(d.cnpj AS TEXT)
 GROUP BY o.razao_social, o.uf
 HAVING SUM(d.valordespesas) > (
     SELECT AVG(total_acumulado) 

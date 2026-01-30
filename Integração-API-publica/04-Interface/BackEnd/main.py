@@ -16,7 +16,7 @@ app.add_middleware(
 @app.get("/api/operadoras")
 def list_operadoras(page: int = 1, limit: int = 10, db: Session = Depends(get_db)):
     offset = (page - 1) * limit
-    query = db.execute(sqlalchemy.text("SELECT * FROM operadoras LIMIT :limit OFFSET :offset"), 
+    query = db.execute(sqlalchemy.text("SELECT *, registro_operadora as registro_ans FROM operadoras LIMIT :limit OFFSET :offset"), 
                        {"limit": limit, "offset": offset}).mappings().all()
     total = db.execute(sqlalchemy.text("SELECT COUNT(*) FROM operadoras")).scalar()
     
@@ -29,7 +29,7 @@ def list_operadoras(page: int = 1, limit: int = 10, db: Session = Depends(get_db
 
 @app.get("/api/operadoras/{identificador}")
 def get_operadora(identificador: str, db: Session = Depends(get_db)):
-    query = sqlalchemy.text("SELECT * FROM operadoras WHERE cnpj = :id OR registro_ans::text = :id")
+    query = sqlalchemy.text("SELECT *, registro_operadora as registro_ans FROM operadoras WHERE cnpj = :id OR registro_operadora::text = :id")
     result = db.execute(query, {"id": identificador}).mappings().first()
     if not result:
         raise HTTPException(status_code=404, detail="Operadora não encontrada")
@@ -38,10 +38,10 @@ def get_operadora(identificador: str, db: Session = Depends(get_db)):
 @app.post("/api/operadoras")
 def create_operadora(data: dict, db: Session = Depends(get_db)):
     query = sqlalchemy.text("""
-        INSERT INTO operadoras (registro_ans, razao_social, cnpj, uf) 
+        INSERT INTO operadoras (registro_operadora, razao_social, cnpj, uf) 
         VALUES (:reg, :rs, :cnpj, :uf)
     """)
-    db.execute(query, {"reg": data['registro_ans'], "rs": data['razao_social'], "cnpj": data['cnpj'], "uf": data['uf']})
+    db.execute(query, {"reg": data.get('registro_operadora') or data.get('registro_ans'), "rs": data['razao_social'], "cnpj": data['cnpj'], "uf": data['uf']})
     db.commit()
     return {"message": "Operadora criada com sucesso!"}
 
@@ -73,7 +73,7 @@ def get_estatisticas(db: Session = Depends(get_db)):
     top_query = sqlalchemy.text("""
         SELECT o.razao_social, SUM(d.valordespesas) as total_despesa
         FROM despesas_consolidadas d
-        JOIN operadoras o ON o.cnpj = d.cnpj::text
+        JOIN operadoras o ON o.registro_operadora = d.cnpj::text
         GROUP BY o.razao_social
         ORDER BY total_despesa DESC LIMIT 5
     """)
@@ -105,7 +105,7 @@ def get_crescimento_despesas(db: Session = Depends(get_db)):
             ((u.total - p.total) / NULLIF(p.total, 0)) * 100 as crescimento
         FROM despesas_inicio p
         JOIN despesas_fim u ON p.reg_ans = u.reg_ans
-        JOIN operadoras o ON o.registro_ans = p.reg_ans
+        JOIN operadoras o ON o.registro_operadora = p.reg_ans
         WHERE p.total > 0
         ORDER BY crescimento DESC
         LIMIT 5
