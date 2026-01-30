@@ -1,38 +1,38 @@
-Dashboard de Despesas - Operadoras de Saúde (ANS)
-README também disponível em: Notion - Documentação Teste Intuitive Care
+# Dashboard de Despesas - Operadoras de Saúde (ANS)
 
-1. Contexto e Objetivo
-Este projeto foi desenvolvido com o objetivo de transformar dados públicos e descentralizados da ANS em uma ferramenta visual para análise de despesas de operadoras de saúde.
+README também disponível em: [Notion - Documentação Teste Intuitive Care](https://www.notion.so/Documenta-o-Teste-Intuitive-Care-2f7a2dc96cf68046bf12ecef9f15886f?source=copy_link)
 
-2. Visão Geral da Arquitetura
+## 1. Contexto e Objetivo
+
+Este projeto foi desenvolvido com o objetivo de transformar dados públicos e descentralizados da **ANS** em uma ferramenta visual para análise de despesas de operadoras de saúde.
+
+## 2. Visão Geral da Arquitetura
+
 O sistema é dividido em três camadas principais:
 
-Banco de Dados: PostgreSQL
+- **Banco de Dados:** PostgreSQL
+- **Backend:** FastAPI (API REST)
+- **Frontend:** Vue.js 3 + Chart.js
 
-Backend: FastAPI (API REST)
+### Fluxo de Dados:
 
-Frontend: Vue.js 3 + Chart.js
+1. Os dados brutos da ANS passam por um processo de **ETL**.
+2. São armazenados de forma normalizada no **PostgreSQL**.
+3. A API expõe rotas analíticas e cadastrais.
+4. O frontend consome esses dados e gera visualizações.
 
-Fluxo de Dados:
+## 3. Execução do Projeto
 
-Os dados brutos da ANS passam por um processo de ETL.
+### 3.1 Banco de Dados (PostgreSQL)
 
-São armazenados de forma normalizada no PostgreSQL.
+- Criar um banco chamado `ans_database`.
+- Executar o script disponível na pasta `03-BancoDeDados` para criação das tabelas.
 
-A API expõe rotas analíticas e cadastrais.
+### 3.2 Backend (FastAPI)
 
-O frontend consome esses dados e gera visualizações.
+Localizado na pasta `BackEnd`.
 
-3. Execução do Projeto
-3.1 Banco de Dados (PostgreSQL)
-Criar um banco chamado ans_database.
-
-Executar o script disponível na pasta 03-BancoDeDados para criação das tabelas.
-
-3.2 Backend (FastAPI)
-Localizado na pasta BackEnd.
-
-Bash
+```bash
 # Criar e ativar o ambiente virtual
 python -m venv venv
 source venv/bin/scripts/activate # Windows: venv\Scripts\activate
@@ -42,55 +42,62 @@ pip install -r requirements.txt
 
 # Executar a API
 uvicorn main:app --reload
-Documentação interativa (Swagger): http://127.0.0.1:8000/docs
+```
 
-3.3 Frontend (Vue.js 3)
-Localizado na pasta FrontEnd.
+Documentação interativa (Swagger): [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 
-Bash
+### 3.3 Frontend (Vue.js 3)
+
+Localizado na pasta `FrontEnd`.
+
+```bash
 # Instalar dependências e rodar
 npm install
 npm run serve
-Acesso local: http://localhost:8080
+```
 
-4. Decisões Técnicas e Trade-offs
-4.1 Framework Backend FastAPI
-Decisão: Uso do FastAPI.
+Acesso local: [http://localhost:8080](http://localhost:8080)
 
-Justificativa: Saindo um pouco do modelo tradicional, escolhi o FastAPI por ele ser assíncrono por natureza e extremamente veloz. Para um sistema que precisa processar grandes volumes de dados da ANS e entregar análises em tempo real, ele é ideal. Além disso, a documentação automática poupa um tempo precioso de integração.
+## 4. Decisões Técnicas e Trade-offs
 
-4.2 Paginação baseada em OFFSET
-Decisão: Opção A (Offset-based).
+### 4.1 Framework Backend FastAPI
 
-Justificativa: Pense na paginação como um sumário de um livro: o usuário quer ter a liberdade de pular direto para a última página se quiser. Como os dados cadastrais não mudam a cada segundo, o OFFSET é a solução mais simples e direta para garantir essa fluidez sem complicar a arquitetura.
+- **Decisão:** Uso do FastAPI.
+- **Justificativa:** Saindo um pouco do modelo tradicional, escolhi o FastAPI por ele ser assíncrono por natureza e extremamente veloz. Para um sistema que precisa processar grandes volumes de dados da ANS e entregar análises em tempo real, ele é ideal. Além disso, a documentação automática poupa um tempo precioso de integração.
 
-4.3 Queries diretas no PostgreSQL
-Decisão: Cálculos em tempo real.
+### 4.2 Paginação baseada em OFFSET
 
-Justificativa: Optei por processar a "inteligência" dos dados direto no banco. Como as queries foram otimizadas com índices, o Postgres entrega a resposta instantaneamente. Isso evita a necessidade de um cache, que poderia acabar mostrando um dado financeiro defasado — e em análise de despesas, precisão é tudo.
+- **Decisão:** Opção A (Offset-based).
+- **Justificativa:** Pense na paginação como um sumário de um livro: o usuário quer ter a liberdade de pular direto para a última página se quiser. Como os dados cadastrais não mudam a cada segundo, o OFFSET é a solução mais simples e direta para garantir essa fluidez sem complicar a arquitetura.
 
-4.4 Mensagens de erro específicas
-Decisão: Estados de erro detalhados.
+### 4.3 Queries diretas no PostgreSQL
 
-Justificativa: Ninguém gosta de mensagens genéricas que não explicam nada. O sistema identifica se o problema é de rede, se a operadora não existe ou se os dados ainda não foram processados. É o conceito de "falhar com elegância", dando um feedback real para quem está usando.
+- **Decisão:** Cálculos em tempo real.
+- **Justificativa:** Optei por processar a "inteligência" dos dados direto no banco. Como as queries foram otimizadas com índices, o Postgres entrega a resposta instantaneamente. Isso evita a necessidade de um cache, que poderia acabar mostrando um dado financeiro defasado — e em análise de despesas, precisão é tudo.
 
-5. Backend e Processamento de Dados
-ETL (Pandas) e o Join Híbrido: Percebi que os arquivos da ANS são inconsistentes: uns usam CNPJ e outros o Registro ANS. Para não perder informação no meio do caminho, criei uma lógica que tenta o cruzamento por CNPJ e, se falhar, usa o Registro como "plano B". Isso garantiu a integridade total da base.
+### 4.4 Mensagens de erro específicas
 
-SQL (CTEs e Joins): Nas queries SQL, fiz questão de seguir o padrão que aprendi na faculdade, utilizando o CAST explícito em todas as conversões de tipos. Saindo um pouco da facilidade de usar atalhos específicos de um banco só, essa abordagem deixa o código mais 'limpo' e profissional, além de evitar erros de compatibilidade entre o CNPJ das despesas e o Registro das operadoras.
+- **Decisão:** Estados de erro detalhados.
+- **Justificativa:** Ninguém gosta de mensagens genéricas que não explicam nada. O sistema identifica se o problema é de rede, se a operadora não existe ou se os dados ainda não foram processados. É o conceito de "falhar com elegância", dando um feedback real para quem está usando.
 
-API REST: Deixei uma coleção do Postman pronta na pasta /docs. Ela mostra todo o ecossistema da API: desde a listagem simples até os endpoints analíticos que alimentam o dashboard.
+## 5. Backend e Processamento de Dados
 
-5.1 Documentação da API (Postman)
+- **ETL (Pandas) e o Join Híbrido:** Percebi que os arquivos da ANS são inconsistentes: uns usam CNPJ e outros o Registro ANS. Para não perder informação no meio do caminho, criei uma lógica que tenta o cruzamento por CNPJ e, se falhar, usa o Registro como "plano B". Isso garantiu a integridade total da base.
+
+- **SQL (CTEs e Joins):** Nas queries SQL, fiz questão de seguir o padrão que aprendi na faculdade, utilizando o `CAST` explícito em todas as conversões de tipos. Saindo um pouco da facilidade de usar atalhos específicos de um banco só, essa abordagem deixa o código mais 'limpo' e profissional, além de evitar erros de compatibilidade entre o CNPJ das despesas e o Registro das operadoras.
+
+- **API REST:** Deixei uma coleção do Postman pronta na pasta `/docs`. Ela mostra todo o ecossistema da API: desde a listagem simples até os endpoints analíticos que alimentam o dashboard.
+
+### 5.1 Documentação da API (Postman)
+
 Para facilitar a validação das rotas e entender a estrutura dos dados retornados, incluí uma coleção completa do Postman.
 
-Como importar e testar:
+**Como importar e testar:**
 
-Abra o Postman.
+1. Abra o Postman.
+2. Clique no botão **Import** (canto superior esquerdo).
+3. Arraste o arquivo `ANSDashboard-CaseIntuitiveCare.json` localizado na pasta `/docs`.
 
-Clique no botão Import (canto superior esquerdo).
+## 6. Frontend e Visualização
 
-Arraste o arquivo ANSDashboard-CaseIntuitiveCare.json localizado na pasta /docs.
-
-6. Frontend e Visualização
-O Desafio da Reatividade: Um problema comum em dashboards é o gráfico aparecer vazio enquanto os dados carregam. Para resolver isso, usei uma "chave de reatividade": o componente do gráfico só "nasce" de verdade quando a API confirma que o dado chegou. Assim, a experiência visual é sempre limpa e sem aquele frame em branco que confunde o usuário.
+- **O Desafio da Reatividade:** Um problema comum em dashboards é o gráfico aparecer vazio enquanto os dados carregam. Para resolver isso, usei uma "chave de reatividade": o componente do gráfico só "nasce" de verdade quando a API confirma que o dado chegou. Assim, a experiência visual é sempre limpa e sem aquele frame em branco que confunde o usuário.
