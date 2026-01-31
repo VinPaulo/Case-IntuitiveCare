@@ -30,22 +30,39 @@ O sistema é dividido em três camadas principais:
 
 ### 3.2 Backend (FastAPI)
 
-Localizado na pasta `BackEnd`.
+Localizado na pasta `Integração-API-publica/04-Interface/BackEnd`.
+
+#### **A. Configuração Inicial (Apenas uma vez ou se mudar de SO)**
+
+Se o projeto veio do Windows para o Linux (Debian/Ubuntu/Pop!\_OS), primeiro instale o pacote de sistema necessário:
 
 ```bash
-# Criar o ambiente virtual
-python3 -m venv venv
+sudo apt update
+sudo apt install python3.12-venv
+```
 
-# Ativar o ambiente virtual
-# No Linux/macOS:
-source venv/bin/activate
-# No Windows:
-# venv\Scripts\activate
+Se o projeto veio do Windows para o Linux, você deve reconstruir o ambiente:
 
-# Instalar dependências
+```bash
+cd /home/paulolemos/testes-estágio-intuitive_care
+rm -rf venv               # Remove a venv incompatível
+python3 -m venv venv       # Cria a venv nativa Linux
+source venv/bin/activate   # Ativa
+cd Integração-API-publica/04-Interface/BackEnd
 pip install -r requirements.txt
+```
 
-# Executar a API
+#### **B. Como rodar no dia a dia**
+
+Uma vez que o ambiente Linux foi criado, você só precisa ativá-lo ao abrir um novo terminal:
+
+```bash
+# 1. Ativar (na raiz do projeto)
+cd /home/paulolemos/testes-estágio-intuitive_care
+source venv/bin/activate
+
+# 2. Rodar (na pasta do Backend)
+cd Integração-API-publica/04-Interface/BackEnd
 uvicorn main:app --reload
 ```
 

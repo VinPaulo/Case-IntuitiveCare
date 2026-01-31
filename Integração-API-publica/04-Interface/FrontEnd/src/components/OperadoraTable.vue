@@ -83,7 +83,6 @@ onMounted(async () => {
   font-size: 0.9rem;
 }
 
-/* Tabela Estilizada */
 .table-wrapper {
   overflow-x: auto;
 }
@@ -112,7 +111,6 @@ onMounted(async () => {
   transition: background 0.2s;
 }
 
-/* Elementos Internos */
 .bold { font-weight: 600; color: #1e293b; }
 
 .badge {

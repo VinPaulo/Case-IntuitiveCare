@@ -73,7 +73,7 @@ def get_estatisticas(db: Session = Depends(get_db)):
     top_query = sqlalchemy.text("""
         SELECT o.razao_social, SUM(d.valordespesas) as total_despesa
         FROM despesas_consolidadas d
-        JOIN operadoras o ON o.registro_operadora = d.cnpj::text
+        JOIN operadoras o ON o.registro_operadora = d.registro_ans
         GROUP BY o.razao_social
         ORDER BY total_despesa DESC LIMIT 5
     """)
@@ -89,16 +89,16 @@ def get_estatisticas(db: Session = Depends(get_db)):
 def get_crescimento_despesas(db: Session = Depends(get_db)):
     query = sqlalchemy.text("""
         WITH despesas_inicio AS (
-            SELECT cnpj as reg_ans, SUM(valordespesas) as total 
+            SELECT registro_ans as reg_ans, SUM(valordespesas) as total 
             FROM despesas_consolidadas 
             WHERE ano = 2023 
-            GROUP BY cnpj
+            GROUP BY registro_ans
         ),
         despesas_fim AS (
-            SELECT cnpj as reg_ans, SUM(valordespesas) as total 
+            SELECT registro_ans as reg_ans, SUM(valordespesas) as total 
             FROM despesas_consolidadas 
             WHERE ano = 2024 OR ano = 2025
-            GROUP BY cnpj
+            GROUP BY registro_ans
         )
         SELECT 
             o.razao_social,

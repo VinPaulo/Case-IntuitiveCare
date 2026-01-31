@@ -52,24 +52,24 @@ CREATE INDEX idx_despesas_periodo ON despesas_consolidadas(ano, trimestre);
 CREATE INDEX idx_despesas_cnpj ON despesas_consolidadas(cnpj);
 
 
--- Query 1
+-- Query 1: Top 5 crescimento
 WITH despesas_2023 AS (
     SELECT
-        CAST(cnpj AS TEXT) AS cod_ans,
+        registro_ans,
         SUM(valordespesas) AS total
     FROM despesas_consolidadas
     WHERE ano = 2023
       AND trimestre = 1
-    GROUP BY cnpj
+    GROUP BY registro_ans
 ),
 despesas_2025 AS (
     SELECT
-        CAST(cnpj AS TEXT) AS cod_ans,
+        registro_ans,
         SUM(valordespesas) AS total
     FROM despesas_consolidadas
     WHERE ano = 2025
       AND trimestre = 1
-    GROUP BY cnpj
+    GROUP BY registro_ans
 )
 SELECT
     o.razao_social,
@@ -78,40 +78,39 @@ SELECT
     ((d25.total - d23.total) / NULLIF(d23.total, 0)) * 100 AS crescimento_percentual
 FROM despesas_2023 d23
 INNER JOIN despesas_2025 d25
-        ON d23.cod_ans = d25.cod_ans
+        ON d23.registro_ans = d25.registro_ans
 INNER JOIN operadoras o
-        ON CAST(o.registro_operadora AS TEXT) = d23.cod_ans
+        ON o.registro_operadora = d23.registro_ans
 ORDER BY crescimento_percentual DESC
 LIMIT 5;
 
--- Query 2
+-- Query 2: Despesas por UF
 SELECT 
     o.uf,
     SUM(d.valordespesas) AS despesa_total,
     AVG(d.valordespesas) AS media_por_operadora
 FROM despesas_consolidadas d
 INNER JOIN operadoras o 
-        ON CAST(o.registro_operadora AS TEXT) = CAST(d.cnpj AS TEXT)
+        ON o.registro_operadora = d.registro_ans
 GROUP BY o.uf
 ORDER BY despesa_total DESC
 LIMIT 5;
 
--- Query 3
-
+-- Query 3: Acima da média
 SELECT 
     o.razao_social, 
     SUM(d.valordespesas) AS total_despesas,
     o.uf
 FROM despesas_consolidadas d
 INNER JOIN operadoras o 
-        ON CAST(o.registro_operadora AS TEXT) = CAST(d.cnpj AS TEXT)
+        ON o.registro_operadora = d.registro_ans
 GROUP BY o.razao_social, o.uf
 HAVING SUM(d.valordespesas) > (
     SELECT AVG(total_acumulado) 
     FROM (
         SELECT SUM(valordespesas) AS total_acumulado 
         FROM despesas_consolidadas 
-        GROUP BY cnpj
+        GROUP BY registro_ans
     ) AS subquery
 )
 ORDER BY total_despesas DESC;

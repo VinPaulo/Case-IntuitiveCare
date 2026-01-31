@@ -53,7 +53,7 @@ const updateChartTheme = () => {
       },
       y: { 
         ticks: { color: textColor },
-        grid: { display: false } // y axis grid usually looks cleaner hidden for horizontal bars
+        grid: { display: false } 
       }
     }
   }
@@ -62,10 +62,8 @@ const updateChartTheme = () => {
 let observer = null
 
 onMounted(async () => {
-  // Initial Theme Check
   updateChartTheme()
-  
-  // Watch for theme changes
+
   observer = new MutationObserver(updateChartTheme)
   observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
 
