@@ -6,3 +6,4 @@ temp-file/
 node_modules/
 .vscode/
 *.pdf
+debug_query.py

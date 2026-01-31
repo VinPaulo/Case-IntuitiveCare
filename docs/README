@@ -27,7 +27,9 @@ Configuração:
 
         Windows: python -m venv venv && .\venv\Scripts\activate
 
-    Instalar os requisitos e rodar: pip install -r requirements.txt uvicorn main:app --reload
+    Instalar os requisitos e rodar: pip install -r requirements.txt
+    Instalar os dotenv: source venv/bin/activate && pip install python-dotenv
+    uvicorn main:app --reload
 
 Link do Swagger: http://127.0.0.1:8000/docs
 3.3 Frontend (Vue.js 3)

@@ -1,12 +1,12 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import OperadoraTable from '../components/OperadoraTable.vue'
-import OperadoraDetails from '../components/OperadoraDetails.vue'
-import DespesasChart from '../components/DespesasChart.vue'
+import HomeView from '../views/HomeView.vue'
+import OperadorasView from '../views/OperadorasView.vue'
+import OperadoraDetailView from '../views/OperadoraDetailView.vue'
 
 const routes = [
-    { path: '/', component: DespesasChart },
-    { path: '/operadoras', component: OperadoraTable },
-    { path: '/operadoras/:id', component: OperadoraDetails, props: true }
+    { path: '/', component: HomeView },
+    { path: '/operadoras', component: OperadorasView },
+    { path: '/operadoras/:id', component: OperadoraDetailView, props: true }
 ]
 
 const router = createRouter({

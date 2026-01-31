@@ -4,7 +4,7 @@ from database import get_db
 import sqlalchemy
 from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI(title="API ANS - Estágio")
+app = FastAPI(title="API ANS - Case Intuitive Care")
 
 app.add_middleware(
     CORSMiddleware,
@@ -71,7 +71,6 @@ def delete_operadora(cnpj: str, db: Session = Depends(get_db)):
 
 @app.get("/api/operadoras/{identificador}/despesas")
 def get_despesas_historico(identificador: str, db: Session = Depends(get_db)):
-    # Agrupamos por ano e trimestre para mostrar um resumo no histórico, como pede o PDF
     query = sqlalchemy.text("""
         SELECT ano, trimestre, SUM(valordespesas) as valordespesas
         FROM despesas_consolidadas 

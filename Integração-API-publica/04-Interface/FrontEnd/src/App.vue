@@ -194,7 +194,6 @@ body {
   transform: translateY(0);
 }
 
-/* Global animations */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -217,7 +216,6 @@ body {
   }
 }
 
-/* Smooth scrollbar */
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;

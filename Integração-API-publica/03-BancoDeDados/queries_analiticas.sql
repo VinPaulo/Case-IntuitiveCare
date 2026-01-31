@@ -116,7 +116,3 @@ acima_da_media AS (
 SELECT COUNT(*) as total_operadoras_acima_criterio
 FROM acima_da_media
 WHERE trimestres_acima >= 2;
-
--- Requisito 3.3: Scripts de Importação (Exemplos)
--- COPY operadoras FROM '/caminho/Relatorio_cadop.csv' WITH (FORMAT csv, HEADER true, DELIMITER ';', ENCODING 'latin1');
--- COPY despesas_consolidadas FROM '/caminho/consolidado_despesas.csv' WITH (FORMAT csv, HEADER true, DELIMITER ';', ENCODING 'utf-8');
