@@ -1,84 +1,315 @@
-README também disponível em (Recomendado): [Notion - Documentação Teste Intuitive Care](https://www.notion.so/Documenta-o-Teste-Intuitive-Care-2f7a2dc96cf68046bf12ecef9f15886f?source=copy_link)
+> **Documentação também disponível em:** [Notion - Documentação Teste Intuitive Care](https://www.notion.so/Documenta-o-Teste-Intuitive-Care-2f7a2dc96cf68046bf12ecef9f15886f?source=copy_link)
 
-1. Contexto e Objetivo
+---
 
-O foco desse projeto foi pegar os dados da ANS, que estão todos espalhados e brutos, e transformar em um dashboard que realmente faça sentido para analisar as despesas das operadoras. 2. Visão Geral da Arquitetura
+## 1. Contexto e Objetivo
 
-O sistema foi dividido em três partes: PostgreSQL para o banco, FastAPI no backend e Vue.js 3 + Chart.js para os gráficos.
+O foco deste projeto foi transformar os dados brutos e dispersos da ANS em um dashboard intuitivo e funcional para análise de despesas das operadoras de saúde. O sistema permite visualizar, filtrar e analisar dados de forma eficiente através de uma interface moderna e responsiva.
 
-Fluxo de Dados: Os dados passam por um ETL (extração e limpeza), são salvos de forma organizada no banco e a API entrega esses dados prontos para o frontend gerar os gráficos. 3. Execução do Projeto
-3.1 Banco de Dados (PostgreSQL)
+---
 
-    Criar o banco ans_database.
+## 2. Visão Geral da Arquitetura
 
-    Rodar o script da pasta 03-BancoDeDados para criar as tabelas automaticamente.
+O sistema foi dividido em três camadas principais:
 
-3.2 Backend (FastAPI)
+- **Banco de Dados:** PostgreSQL 14+
+- **Backend:** FastAPI (Python 3.12)
+- **Frontend:** Vue.js 3 + Chart.js
 
-Local: Integração-API-publica/04-Interface/BackEnd
+### Fluxo de Dados
 
-Configuração:
+```
+Arquivos CSV (ANS) → ETL (Pandas) → PostgreSQL → FastAPI → Vue.js + Chart.js
+```
 
-    Na raiz do projeto: cd /home/paulolemos/testes-estágio-intuitive_care
+Os dados passam por um processo de ETL (extração, transformação e limpeza), são armazenados de forma normalizada no banco de dados, e a API REST entrega esses dados processados para o frontend gerar visualizações interativas.
 
-    Criar e ativar a venv:
+---
 
-        Linux: python3 -m venv venv && source venv/bin/activate
+## 3.Execução do Projeto
 
-        Windows: python -m venv venv && .\venv\Scripts\activate
+### 3.1 Banco de Dados (PostgreSQL)
 
-    Instalar os requisitos e rodar: pip install -r requirements.txt
-    Instalar os dotenv: source venv/bin/activate && pip install python-dotenv
-    uvicorn main:app --reload
+1. Criar o banco de dados:
 
-Link do Swagger: http://127.0.0.1:8000/docs
-3.3 Frontend (Vue.js 3)
+   ```sql
+   CREATE DATABASE ans_database;
+   ```
 
-Na pasta FrontEnd: npm install npm run serve (Roda em http://localhost:8080) 4. Decisões Técnicas e Trade-offs
-4.1 Processamento de Arquivos (ETL)
+2. Executar o script DDL localizado em `03-BancoDeDados/` para criar as tabelas automaticamente.
 
-    Decisão: Usar Pandas processando em memória.
+### 3.2 Backend (FastAPI)
 
-    Justificativa: Como os arquivos da ANS encaixam bem na memória de um PC atual, processar tudo de uma vez é muito mais rápido e facilita na hora de fazer limpezas mais chatas (como regex e joins), sem precisar ficar lendo o arquivo várias vezes.
+**Localização:** `Integração-API-publica/04-Interface/BackEnd`
 
-4.2 Modelagem do Banco
+**Configuração:**
 
-    Decisão: Modelagem Normalizada.
+1. Navegar até a raiz do projeto:
 
-    Justificativa: Separei as operadoras das despesas. É como separar o cadastro de um cliente das compras que ele faz: as compras aumentam todo dia, mas o cadastro muda pouco. Isso deixa o banco mais organizado e as consultas muito mais rápidas.
+   ```bash
+   cd /home/paulolemos/testes-estágio-intuitive_care
+   ```
 
-4.3 Precisão nos Valores
+2. Criar e ativar o ambiente virtual:
+   - **Linux:**
+     ```bash
+     python3 -m venv venv
+     source venv/bin/activate
+     ```
+   - **Windows:**
+     ```bash
+     python -m venv venv
+     .\venv\Scripts\activate
+     ```
 
-    Decisão: Usar DECIMAL(18,2) para os valores financeiros.
+3. Instalar dependências:
 
-    Justificativa: Para mexer com dinheiro, não dá para usar FLOAT porque ele arredonda os valores de um jeito estranho. O DECIMAL garante que a conta feche certinho, centavo por centavo.
+   ```bash
+   pip install -r requirements.txt
+   pip install python-dotenv
+   ```
 
-4.4 Framework Backend
+4. Configurar variáveis de ambiente:
+   - Copiar `.env.example` para `.env`
+   - Preencher com as credenciais do banco de dados
 
-    Decisão: FastAPI.
+5. Executar o servidor:
+   ```bash
+   cd Integração-API-publica/04-Interface/BackEnd
+   uvicorn main:app --reload
+   ```
 
-    Justificativa: Escolhi o FastAPI por ser assíncrono e muito veloz. Ele consegue lidar com várias requisições ao mesmo tempo sem travar, o que é ótimo para processar o volume de dados da ANS e ainda gerar a documentação (Swagger) na hora.
+**Documentação da API (Swagger):** http://127.0.0.1:8000/docs
+**Documentação da API (Postman):** docs/ANSDashboard-CaseIntuitiveCare.postman_collection.json
 
-4.5 Paginação
+### 3.3 Frontend (Vue.js 3)
 
-    Decisão: Paginação via Offset.
+**Localização:** `Integração-API-publica/04-Interface/FrontEnd`
 
-    Justificativa: Pense na paginação como o sumário de um livro: o usuário pode querer pular direto para a última página se quiser. Para a quantidade de operadoras que temos, essa é a forma mais simples e direta de navegar.
+**Configuração:**
 
-4.6 Sistema de Busca
+1. Instalar dependências:
 
-    Decisão: Busca feita no Servidor.
+   ```bash
+   npm install
+   ```
 
-    Justificativa: Em vez de carregar tudo no navegador e filtrar lá, eu mando a busca para o banco (usando ILIKE). Assim, o usuário acha a operadora mesmo que ela esteja em outra página que ainda não foi carregada.
+2. Executar servidor de desenvolvimento:
+   ```bash
+   npm run serve
+   ```
 
-5. Backend e Processamento
+**Aplicação:** http://localhost:8080
 
-   Lógica do "Plano B" no Join: Os arquivos da ANS são meio bagunçados: uns usam CNPJ e outros o Registro ANS. Para não perder dado no caminho, fiz uma lógica que tenta o cruzamento pelo CNPJ e, se não achar, tenta pelo Registro. Isso garantiu que a base ficasse completa.
+---
 
-   SQL na mão: Usei CAST em todas as conversões de tipo nas queries. Segui o que aprendi na faculdade para o código ficar limpo e profissional, evitando erros de compatibilidade entre as tabelas.
+## 4. Decisões Técnicas e Trade-offs
 
-   Postman: Deixei o arquivo ANSDashboard-CaseIntuitiveCare.json na pasta /docs. Só importar no Postman para testar as rotas da API.
+### 4.1 Processamento de Arquivos (ETL)
 
-6. Frontend e Visualização
+**Decisão:** Processamento em memória com Pandas
 
-   Controle de Reatividade: Para evitar que o gráfico apareça vazio enquanto o banco responde, usei uma "chave". O componente do gráfico só é criado quando a API confirma que o dado chegou. Assim, o usuário não vê aquele frame em branco enquanto espera.
+**Justificativa:** Os arquivos da ANS (~100MB) cabem confortavelmente na memória de um computador moderno. Processar tudo de uma vez é significativamente mais rápido e permite operações complexas (regex, joins, agregações) sem múltiplas leituras do disco. Para volumes maiores (>1GB), consideraria processamento em chunks ou ferramentas como Dask.
+
+### 4.2 Modelagem do Banco de Dados
+
+**Decisão:** Modelagem Normalizada (3NF)
+
+**Justificativa:** Separei os dados cadastrais das operadoras (tabela `operadoras`) dos dados transacionais de despesas (tabela `despesas_consolidadas`). Esta abordagem oferece:
+
+- **Redução de redundância:** Dados cadastrais armazenados uma única vez
+- **Integridade referencial:** Chaves estrangeiras garantem consistência
+- **Performance em consultas analíticas:** Joins otimizados com índices apropriados
+- **Facilidade de manutenção:** Atualizações de cadastro não afetam histórico
+
+### 4.3 Precisão nos Valores Monetários
+
+**Decisão:** DECIMAL(18,2) para valores financeiros
+
+**Justificativa:** Valores monetários exigem precisão exata. O tipo FLOAT/DOUBLE usa aritmética de ponto flutuante binário, que pode causar erros de arredondamento (ex: 0.1 + 0.2 ≠ 0.3). O DECIMAL armazena valores exatos em base 10, garantindo que operações financeiras sejam precisas até o centavo.
+
+### 4.4 Framework Backend
+
+**Decisão:** FastAPI
+
+**Justificativa:**
+
+- **Performance:** Assíncrono por padrão, permite alta concorrência
+- **Documentação automática:** Swagger/OpenAPI gerado automaticamente
+- **Validação de dados:** Integração nativa com Pydantic
+- **Moderna:** Type hints, async/await, compatível com Python 3.12
+- **Simplicidade:** Menos boilerplate que Flask para APIs REST
+
+### 4.5 Estratégia de Paginação
+
+**Decisão:** Offset-based pagination
+
+**Justificativa:** Para o volume de dados atual (~1000 operadoras), offset-based é a solução mais simples e intuitiva. Permite navegação direta para qualquer página (ex: "ir para página 5"). Alternativas como cursor-based seriam mais eficientes para datasets muito grandes (>100k registros) ou com alta frequência de inserções, mas adicionariam complexidade desnecessária neste contexto.
+
+### 4.6 Sistema de Busca
+
+**Decisão:** Busca no servidor (server-side filtering)
+
+**Justificativa:**
+
+- **Escalabilidade:** Funciona independente do volume de dados
+- **Consistência:** Busca em todos os registros, não apenas nos carregados
+- **Performance:** Aproveita índices do PostgreSQL (ILIKE otimizado)
+- **Experiência do usuário:** Resultados instantâneos sem carregar dados desnecessários
+
+**Alternativa considerada:** Busca no cliente seria mais rápida para datasets pequenos já carregados, mas limitaria a busca apenas aos dados da página atual.
+
+### 4.7 Cache vs Queries Diretas
+
+**Decisão:** Cache em memória com TTL (5 minutos) para a rota `/api/estatisticas`
+
+**Justificativa:**
+
+- **Performance:** Evita que o banco de dados recalcule agregações complexas (SUM, AVG) a cada requisição, reduzindo o tempo de resposta de centenas de milissegundos para praticamente instantâneo.
+- **Eficiência:** Reduz a carga no banco de dados para dados que não mudam em tempo real.
+- **Consistência:** O TTL de 5 minutos garante um equilíbrio entre performance e atualização dos dados.
+- **Simplicidade:** Implementação em memória (global variable) é ideal para o volume de dados e evita dependências externas como Redis neste estágio do projeto.
+
+### 4.8 Gerenciamento de Estado (Frontend)
+
+**Decisão:** Props/Events simples (sem Vuex/Pinia)
+
+**Justificativa:**
+
+- **Simplicidade:** A aplicação tem apenas 3 views com estado local
+- **Sem compartilhamento complexo:** Cada view gerencia seus próprios dados
+- **Manutenibilidade:** Menos abstrações = código mais direto
+- **Performance:** Sem overhead de store centralizado
+
+**Quando usar Pinia:**
+
+- Estado compartilhado entre múltiplas views
+- Necessidade de persistência (localStorage)
+- Lógica de negócio complexa reutilizável
+
+### 4.9 Estrutura de Resposta da API
+
+**Decisão:** Dados + Metadados
+
+**Justificativa:** Metadados permitem que o frontend implemente paginação completa (ex: "Mostrando 10 de 100 registros", "Página 1 de 10") sem precisar fazer requisições adicionais. O overhead de ~50 bytes é insignificante comparado aos benefícios de UX.
+
+### 4.10 Tratamento de Erros e Loading States
+
+**Decisão:** Estados de loading explícitos + mensagens de erro específicas
+
+**Justificativa:** Transparência melhora a experiência do usuário e facilita debugging.
+
+### 4.11 Justificativas das Queries Analíticas (Teste 3.4)
+
+#### Query 1: Crescimento Percentual (Desafio de Dados Faltantes)
+
+**Abordagem:** Usei um `INNER JOIN` entre o primeiro trimestre de 2023 e a consolidação de 2024/2025.
+**Tratamento de dados faltantes:** Operadoras que não possuem dados no início do período são desconsideradas no cálculo de crescimento (pois o crescimento seria infinito ou indefinido). Usei `NULLIF(p.total, 0)` para evitar divisões por zero, garantindo a robustez do script mesmo com bases inconsistentes.
+
+#### Query 2: Distribuição por UF (Desafio de Médias)
+
+**Abordagem:** Além do `SUM` para o total por estado, implementei o `AVG` para calcular a média de despesa por operadora em cada UF.
+**Justificativa:** Isso permite comparar não apenas o volume bruto (que sempre será maior em SP/RJ), mas também a concentração de gastos por empresa em cada região, fornecendo um insight muito mais rico que o simples somatório.
+
+#### Query 3: Desempenho Acima da Média (Trade-off de Abordagem)
+
+**Abordagem:** Utilizei **Common Table Expressions (CTEs)** para primeiro calcular a média global e depois contar os trimestres acima dessa média por operadora.
+**Justificativa:**
+
+- **Legibilidade:** CTEs tornam o código SQL auto-explicativo e fácil de manter.
+- **Performance:** O PostgreSQL otimiza bem CTEs, permitindo que a média global seja calculada uma única vez antes do filtro principal.
+- **Flexibilidade:** É fácil ajustar a regra (ex: mudar de 2 para 3 trimestres) sem reescrever toda a lógica.
+
+---
+
+## 5. Backend e Processamento
+
+### Lógica de Join Resiliente
+
+Os arquivos da ANS apresentam inconsistências: alguns usam CNPJ, outros Registro ANS. Implementei uma estratégia de "fallback":
+
+1. Tenta join por CNPJ
+2. Se falhar, tenta por Registro ANS
+3. Registra operadoras não encontradas para análise
+
+### Conversões de Tipo Explícitas
+
+Todas as queries SQL utilizam `CAST` explícito para conversões de tipo:
+
+```sql
+WHERE registro_operadora::text = :id
+```
+
+Isso evita erros de compatibilidade e torna o código mais robusto e profissional.
+
+### Documentação da API
+
+Collection do Postman disponível em: `/docs/ANSDashboard-CaseIntuitiveCare.json`
+
+Importar no Postman para testar todas as rotas com exemplos pré-configurados.
+
+---
+
+## 6. Frontend e Visualização
+
+### Controle de Reatividade
+
+Para evitar renderização de gráficos vazios durante o carregamento:
+
+```vue
+<Bar v-if="loaded" :data="chartData" :key="JSON.stringify(chartData)" />
+```
+
+A propriedade `:key` força re-renderização quando os dados mudam, garantindo que o gráfico sempre reflita o estado atual.
+
+## 7. Segurança
+
+### Variáveis de Ambiente
+
+Credenciais sensíveis (senha do banco) armazenadas em arquivo `.env`:
+
+### CORS
+
+Configurado para permitir requisições do frontend em desenvolvimento.
+
+## 8. Testes
+
+### Testes Manuais
+
+1. **API:** Usar Postman collection em `/docs`
+2. **Frontend:** Testar fluxos principais:
+   - Listagem de operadoras
+   - Busca por nome/CNPJ
+   - Navegação entre páginas
+   - Visualização de detalhes
+   - Gráfico de despesas por UF
+
+### 8.2 Testes Automatizados
+
+Implementei uma suíte de testes usando `pytest` para garantir a integridade da API.
+
+**Como executar:**
+
+1. Certifique-se de que o ambiente virtual está ativo e as dependências instaladas:
+
+   ```bash
+   pip install pytest httpx
+   ```
+
+2. Na pasta do Backend, execute:
+   ```bash
+   pytest test_main.py
+   ```
+
+**O que é testado:**
+
+**Paginação:** Estrutura correta de retorno.
+**Validação Pydantic:** Bloqueio de dados inválidos no POST.
+**Tratamento de Erros:** Resposta 404 para recursos inexistentes.
+**Performance de Cache:** Verificação se o cache de estatísticas está respondendo.
+
+---
+
+**Desenvolvido por:** Paulo Lemos  
+**Data:** Janeiro 2026  
+**Contato:** [GitHub](https://github.com/VinPaulo)
