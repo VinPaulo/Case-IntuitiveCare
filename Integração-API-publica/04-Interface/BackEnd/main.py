@@ -14,11 +14,21 @@ app.add_middleware(
 )
 
 @app.get("/api/operadoras")
-def list_operadoras(page: int = 1, limit: int = 10, db: Session = Depends(get_db)):
+def list_operadoras(page: int = 1, limit: int = 10, search: str = None, db: Session = Depends(get_db)):
     offset = (page - 1) * limit
-    query = db.execute(sqlalchemy.text("SELECT *, registro_operadora as registro_ans FROM operadoras LIMIT :limit OFFSET :offset"), 
-                       {"limit": limit, "offset": offset}).mappings().all()
-    total = db.execute(sqlalchemy.text("SELECT COUNT(*) FROM operadoras")).scalar()
+    
+    where_clause = ""
+    params = {"limit": limit, "offset": offset}
+    
+    if search:
+        where_clause = "WHERE razao_social ILIKE :search OR cnpj LIKE :search OR registro_operadora::text LIKE :search"
+        params["search"] = f"%{search}%"
+        
+    query_str = f"SELECT *, registro_operadora as registro_ans FROM operadoras {where_clause} LIMIT :limit OFFSET :offset"
+    total_str = f"SELECT COUNT(*) FROM operadoras {where_clause}"
+    
+    query = db.execute(sqlalchemy.text(query_str), params).mappings().all()
+    total = db.execute(sqlalchemy.text(total_str), params).scalar()
     
     return {
         "data": query,
@@ -59,10 +69,17 @@ def delete_operadora(cnpj: str, db: Session = Depends(get_db)):
     db.commit()
     return {"message": "Operadora excluída!"}
 
-@app.get("/api/operadoras/{cnpj}/despesas")
-def get_despesas_historico(cnpj: str, db: Session = Depends(get_db)):
-    query = sqlalchemy.text("SELECT * FROM despesas_consolidadas WHERE cnpj::text = :cnpj ORDER BY ano DESC, trimestre DESC")
-    result = db.execute(query, {"cnpj": cnpj}).mappings().all()
+@app.get("/api/operadoras/{identificador}/despesas")
+def get_despesas_historico(identificador: str, db: Session = Depends(get_db)):
+    # Agrupamos por ano e trimestre para mostrar um resumo no histórico, como pede o PDF
+    query = sqlalchemy.text("""
+        SELECT ano, trimestre, SUM(valordespesas) as valordespesas
+        FROM despesas_consolidadas 
+        WHERE cnpj = :id OR registro_ans = :id 
+        GROUP BY ano, trimestre 
+        ORDER BY ano DESC, trimestre DESC
+    """)
+    result = db.execute(query, {"id": identificador}).mappings().all()
     return result
 
 @app.get("/api/estatisticas")
@@ -84,6 +101,21 @@ def get_estatisticas(db: Session = Depends(get_db)):
         "media_geral": agg_res["media"],
         "top_5": top_5
     }
+
+@app.get("/api/analise/despesas-por-uf")
+def get_despesas_por_uf(db: Session = Depends(get_db)):
+    query = sqlalchemy.text("""
+        SELECT 
+            o.uf,
+            SUM(d.valordespesas) AS total_despesa
+        FROM despesas_consolidadas d
+        JOIN operadoras o ON o.registro_operadora = d.registro_ans
+        GROUP BY o.uf
+        ORDER BY total_despesa DESC
+        LIMIT 10
+    """)
+    result = db.execute(query).mappings().all()
+    return result
 
 @app.get("/api/analise/crescimento")
 def get_crescimento_despesas(db: Session = Depends(get_db)):

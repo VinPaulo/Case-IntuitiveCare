@@ -1,8 +1,20 @@
 <template>
   <div class="table-container">
     <div class="table-header">
-      <h2>Operadoras Cadastradas</h2>
-      <p>Gerenciamento e visualização das operadoras ativas na ANS</p>
+      <div class="header-main">
+        <div>
+          <h2>Operadoras Cadastradas</h2>
+          <p>Gerenciamento e visualização das operadoras ativas na ANS</p>
+        </div>
+        <div class="search-box">
+          <input 
+            v-model="search" 
+            @input="handleSearch" 
+            type="text" 
+            placeholder="Buscar por nome, CNPJ ou Registro..."
+          >
+        </div>
+      </div>
     </div>
     
     <div class="table-wrapper">
@@ -17,6 +29,12 @@
           </tr>
         </thead>
         <tbody>
+          <tr v-if="loading" class="no-hover">
+            <td colspan="5" class="text-center">Carregando dados...</td>
+          </tr>
+          <tr v-else-if="operadoras.length === 0" class="no-hover">
+            <td colspan="5" class="text-center">Nenhuma operadora encontrada.</td>
+          </tr>
           <tr v-for="op in operadoras" :key="op.registro_ans">
             <td><span class="badge">{{ op.registro_ans }}</span></td>
             <td class="bold">{{ op.razao_social }}</td>
@@ -31,27 +49,69 @@
         </tbody>
       </table>
     </div>
+
+    <div class="table-footer">
+      <div class="pagination-info">
+        Mostrando {{ operadoras.length }} de {{ total }} registros
+      </div>
+      <div class="pagination-controls">
+        <button :disabled="page === 1" @click="changePage(-1)" class="btn-page">Anterior</button>
+        <span class="page-indicator">Página {{ page }} de {{ totalPages }}</span>
+        <button :disabled="page >= totalPages" @click="changePage(1)" class="btn-page">Próximo</button>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import api from '../services/api'
 
 const operadoras = ref([])
+const total = ref(0)
+const page = ref(1)
+const limit = ref(10)
+const search = ref('')
+const loading = ref(false)
+
+const totalPages = computed(() => Math.ceil(total.value / limit.value) || 1)
 
 const formatCNPJ = (cnpj) => {
-  return cnpj.replace(/^(\dt{2})(\dt{3})(\dt{3})(\dt{4})(\dt{2}).*/, "$1.$2.$3/$4-$5")
+  if (!cnpj) return '-'
+  const c = cnpj.replace(/\D/g, '')
+  return c.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2}).*/, "$1.$2.$3/$4-$5")
 }
 
-onMounted(async () => {
+const loadData = async () => {
+  loading.value = true
   try {
-    const { data } = await api.get('/operadoras')
+    const { data } = await api.get('/operadoras', {
+      params: { page: page.value, limit: limit.value, search: search.value }
+    })
     operadoras.value = data.data
+    total.value = data.total
   } catch (e) {
     console.error("Erro ao carregar operadoras", e)
+  } finally {
+    loading.value = false
   }
-})
+}
+
+let searchTimeout = null
+const handleSearch = () => {
+  clearTimeout(searchTimeout)
+  searchTimeout = setTimeout(() => {
+    page.value = 1
+    loadData()
+  }, 500)
+}
+
+const changePage = (delta) => {
+  page.value += delta
+  loadData()
+}
+
+onMounted(loadData)
 </script>
 
 <style scoped>
@@ -70,6 +130,29 @@ onMounted(async () => {
   border-bottom: 1px solid var(--border-color);
 }
 
+.header-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.search-box input {
+  padding: 10px 15px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  color: var(--text-color);
+  min-width: 300px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.search-box input:focus {
+  border-color: var(--primary-color);
+}
+
 .table-header h2 {
   margin: 0;
   color: var(--text-color);
@@ -85,6 +168,7 @@ onMounted(async () => {
 
 .table-wrapper {
   overflow-x: auto;
+  min-height: 200px;
 }
 
 .styled-table {
@@ -106,12 +190,59 @@ onMounted(async () => {
   color: var(--text-color);
 }
 
-.styled-table tbody tr:hover {
+.styled-table tbody tr:hover:not(.no-hover) {
   background-color: var(--table-row-hover);
   transition: background 0.2s;
 }
 
-.bold { font-weight: 600; color: #1e293b; }
+.table-footer {
+  padding: 15px 25px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--table-header-bg);
+  border-top: 1px solid var(--border-color);
+}
+
+.pagination-info {
+  font-size: 0.85rem;
+  color: var(--text-color);
+  opacity: 0.8;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.btn-page {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+}
+
+.btn-page:hover:not(:disabled) {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.btn-page:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.page-indicator {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.bold { font-weight: 600; }
 
 .badge {
   background: #e0f2fe;
@@ -142,9 +273,6 @@ onMounted(async () => {
   transition: opacity 0.2s;
 }
 
-.btn-detail:hover {
-  opacity: 0.85;
-}
-
+.btn-detail:hover { opacity: 0.85; }
 .text-center { text-align: center; }
 </style>

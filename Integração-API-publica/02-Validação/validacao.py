@@ -5,7 +5,7 @@ import os
 CONSOLIDADO_CSV = "consolidado_despesas.csv"
 OPERADORAS_URL = "https://dadosabertos.ans.gov.br/FTP/PDA/operadoras_de_plano_de_saude_ativas/Relatorio_cadop.csv"
 CADASTRO_CSV = "cadastro_operadoras.csv"
-RESULTADO_FINAL = "despesas_agragadas.csv"
+RESULTADO_FINAL = "despesas_agregadas.csv"
 
 def validar_cnpj(valor):
     cnpj = str(valor).replace('.', '').replace('-', '').replace('/', '').replace(' ', '').replace('"', '').zfill(14)
@@ -52,34 +52,42 @@ def processar_transformacao():
         df_cad['CNPJ_KEY'] = df_cad['CNPJ'].astype(str).str.replace(r'\D', '', regex=True).str.zfill(14)
         df_cad['REG_KEY'] = df_cad['REGISTRO_OPERADORA'].astype(str).str.replace(r'\D', '', regex=True)
 
-        # Merge 1: Try joining by CNPJ
         m1 = pd.merge(df, df_cad[['CNPJ_KEY', 'REG_KEY', 'REGISTRO_OPERADORA', 'MODALIDADE', 'UF', 'RAZAO_SOCIAL']], 
                       left_on='VALOR_LIMPO', right_on='CNPJ_KEY', how='left')
         
-        # Merge 2: For those that didn't match CNPJ, try joining by Registry
+        
         m2 = pd.merge(df, df_cad[['REG_KEY', 'REGISTRO_OPERADORA', 'MODALIDADE', 'UF', 'RAZAO_SOCIAL']], 
                       left_on='VALOR_LIMPO', right_on='REG_KEY', how='left')
         
-        # Combine: prioritizing CNPJ match, then Registry match
         df_final = m1.copy()
         mask = df_final['REG_KEY'].isna()
         df_final.loc[mask, ['REG_KEY', 'REGISTRO_OPERADORA', 'MODALIDADE', 'UF', 'RAZAO_SOCIAL']] = m2.loc[mask, ['REG_KEY', 'REGISTRO_OPERADORA', 'MODALIDADE', 'UF', 'RAZAO_SOCIAL']].values
 
         df_final = df_final.rename(columns={'REGISTRO_OPERADORA': 'RegistroANS', 'MODALIDADE': 'Modalidade'})
 
-        # Grouping with the consistent RegistroANS key
-        agrupado = df_final.groupby(['RegistroANS', 'RazaoSocial', 'UF'], dropna=False).agg({
+        
+        df_quarterly = df_final.groupby(['RegistroANS', 'RAZAO_SOCIAL', 'UF', 'Ano', 'Trimestre'], dropna=False).agg({
+            'ValorDespesas': 'sum'
+        }).reset_index()
+
+        agrupado = df_quarterly.groupby(['RegistroANS', 'RAZAO_SOCIAL', 'UF'], dropna=False).agg({
             'ValorDespesas': ['sum', 'mean', 'std']
         }).reset_index()
 
         agrupado.columns = ['RegistroANS', 'RazaoSocial', 'UF', 'TotalDespesas', 'MediaTrimestral', 'DesvioPadrao']
         agrupado['DesvioPadrao'] = agrupado['DesvioPadrao'].fillna(0)
+        
         agrupado = agrupado.sort_values(by='TotalDespesas', ascending=False)
+        
+        agrupado = agrupado.drop_duplicates(subset=['RazaoSocial', 'UF'])
 
-        # Fix the user's typo from 'agragadas' to 'agregadas' while following the rename request
         CORRECTED_FINAL = "despesas_agregadas.csv"
         agrupado.to_csv(CORRECTED_FINAL, index=False, sep=';', encoding='utf-8-sig')
-        print(f"Sucesso: {CORRECTED_FINAL} gerado com vínculos corrigidos.")
+        
+        FIXED_CONSOLIDADO = "fix_consolidado.csv"
+        df_final[['CNPJ_KEY', 'RegistroANS', 'Trimestre', 'Ano', 'ValorDespesas', 'RazaoSocial_x']].to_csv(FIXED_CONSOLIDADO, index=False, sep=';', encoding='utf-8-sig')
+        
+        print(f"Sucesso: {CORRECTED_FINAL} e {FIXED_CONSOLIDADO} gerados.")
 
     except Exception as e:
         print(f"Erro: {e}")

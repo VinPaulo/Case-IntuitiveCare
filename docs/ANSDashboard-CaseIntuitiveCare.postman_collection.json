@@ -390,6 +390,30 @@
       ]
     },
     {
+      "name": "http://127.0.0.1:8000/api/analise/despesas-por-uf",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://127.0.0.1:8000/api/analise/despesas-por-uf",
+          "protocol": "http",
+          "host": [
+            "127",
+            "0",
+            "0",
+            "1"
+          ],
+          "port": "8000",
+          "path": [
+            "api",
+            "analise",
+            "despesas-por-uf"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
       "name": "http://127.0.0.1:8000/docs",
       "request": {
         "method": "GET",

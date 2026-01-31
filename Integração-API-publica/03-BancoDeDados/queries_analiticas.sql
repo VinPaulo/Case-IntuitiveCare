@@ -2,7 +2,6 @@ DROP TABLE IF EXISTS despesas_agregadas;
 DROP TABLE IF EXISTS despesas_consolidadas;
 DROP TABLE IF EXISTS operadoras;
 
-
 CREATE TABLE operadoras (
     registro_operadora VARCHAR(20) PRIMARY KEY,
     cnpj VARCHAR(20),
@@ -46,45 +45,42 @@ CREATE TABLE despesas_agregadas (
     PRIMARY KEY (razaosocial, uf)
 );
 
-
 CREATE INDEX idx_despesas_reg_ans ON despesas_consolidadas(registro_ans);
 CREATE INDEX idx_despesas_periodo ON despesas_consolidadas(ano, trimestre);
 CREATE INDEX idx_despesas_cnpj ON despesas_consolidadas(cnpj);
 
-
--- Query 1: Top 5 crescimento
-WITH despesas_2023 AS (
-    SELECT
+-- Query 1: 5 operadoras com maior crescimento percentual
+WITH despesas_por_periodo AS (
+    SELECT 
         registro_ans,
-        SUM(valordespesas) AS total
+        ano,
+        trimestre,
+        SUM(valordespesas) as total_tri
     FROM despesas_consolidadas
-    WHERE ano = 2023
-      AND trimestre = 1
-    GROUP BY registro_ans
+    GROUP BY registro_ans, ano, trimestre
 ),
-despesas_2025 AS (
-    SELECT
-        registro_ans,
-        SUM(valordespesas) AS total
-    FROM despesas_consolidadas
-    WHERE ano = 2025
-      AND trimestre = 1
+periodos_extremos AS (
+    SELECT 
+         registro_ans,
+         MIN(ano * 10 + trimestre) as primeiro_periodo,
+         MAX(ano * 10 + trimestre) as ultimo_periodo
+    FROM despesas_por_periodo
     GROUP BY registro_ans
 )
-SELECT
+SELECT 
     o.razao_social,
-    d23.total AS valor_2023,
-    d25.total AS valor_2025,
-    ((d25.total - d23.total) / NULLIF(d23.total, 0)) * 100 AS crescimento_percentual
-FROM despesas_2023 d23
-INNER JOIN despesas_2025 d25
-        ON d23.registro_ans = d25.registro_ans
-INNER JOIN operadoras o
-        ON o.registro_operadora = d23.registro_ans
+    dp_inicio.total_tri AS valor_inicial,
+    dp_fim.total_tri AS valor_final,
+    ((dp_fim.total_tri - dp_inicio.total_tri) / NULLIF(dp_inicio.total_tri, 0)) * 100 AS crescimento_percentual
+FROM periodos_extremos pe
+JOIN despesas_por_periodo dp_inicio ON pe.registro_ans = dp_inicio.registro_ans AND pe.primeiro_periodo = (dp_inicio.ano * 10 + dp_inicio.trimestre)
+JOIN despesas_por_periodo dp_fim ON pe.registro_ans = dp_fim.registro_ans AND pe.ultimo_periodo = (dp_fim.ano * 10 + dp_fim.trimestre)
+JOIN operadoras o ON o.registro_operadora = pe.registro_ans
+WHERE dp_inicio.total_tri > 0
 ORDER BY crescimento_percentual DESC
 LIMIT 5;
 
--- Query 2: Despesas por UF
+-- Query 2: Distribuição de despesas por UF
 SELECT 
     o.uf,
     SUM(d.valordespesas) AS despesa_total,
@@ -96,21 +92,31 @@ GROUP BY o.uf
 ORDER BY despesa_total DESC
 LIMIT 5;
 
--- Query 3: Acima da média
-SELECT 
-    o.razao_social, 
-    SUM(d.valordespesas) AS total_despesas,
-    o.uf
-FROM despesas_consolidadas d
-INNER JOIN operadoras o 
-        ON o.registro_operadora = d.registro_ans
-GROUP BY o.razao_social, o.uf
-HAVING SUM(d.valordespesas) > (
-    SELECT AVG(total_acumulado) 
+-- Query 3: Operadoras acima da média em pelo menos 2 trimestres
+WITH media_geral AS (
+    SELECT AVG(total_tri) as valor_medio
     FROM (
-        SELECT SUM(valordespesas) AS total_acumulado 
-        FROM despesas_consolidadas 
-        GROUP BY registro_ans
-    ) AS subquery
+        SELECT registro_ans, ano, trimestre, SUM(valordespesas) as total_tri
+        FROM despesas_consolidadas
+        GROUP BY registro_ans, ano, trimestre
+    ) as sub
+),
+acima_da_media AS (
+    SELECT 
+        d.registro_ans,
+        COUNT(*) as trimestres_acima
+    FROM (
+        SELECT registro_ans, ano, trimestre, SUM(valordespesas) as total_tri
+        FROM despesas_consolidadas
+        GROUP BY registro_ans, ano, trimestre
+    ) d, media_geral m
+    WHERE d.total_tri > m.valor_medio
+    GROUP BY d.registro_ans
 )
-ORDER BY total_despesas DESC;
+SELECT COUNT(*) as total_operadoras_acima_criterio
+FROM acima_da_media
+WHERE trimestres_acima >= 2;
+
+-- Requisito 3.3: Scripts de Importação (Exemplos)
+-- COPY operadoras FROM '/caminho/Relatorio_cadop.csv' WITH (FORMAT csv, HEADER true, DELIMITER ';', ENCODING 'latin1');
+-- COPY despesas_consolidadas FROM '/caminho/consolidado_despesas.csv' WITH (FORMAT csv, HEADER true, DELIMITER ';', ENCODING 'utf-8');
