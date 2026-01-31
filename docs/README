@@ -1,6 +1,6 @@
 # Dashboard de Despesas - Operadoras de Saúde (ANS)
 
-README também disponível em: [Notion - Documentação Teste Intuitive Care](https://www.notion.so/Documenta-o-Teste-Intuitive-Care-2f7a2dc96cf68046bf12ecef9f15886f?source=copy_link)
+README também disponível em (Recomendado): [Notion - Documentação Teste Intuitive Care](https://www.notion.so/Documenta-o-Teste-Intuitive-Care-2f7a2dc96cf68046bf12ecef9f15886f?source=copy_link)
 
 ## 1. Contexto e Objetivo
 
@@ -32,39 +32,34 @@ O sistema é dividido em três camadas principais:
 
 Localizado na pasta `Integração-API-publica/04-Interface/BackEnd`.
 
-#### **A. Configuração Inicial (Apenas uma vez ou se mudar de SO)**
+> [!IMPORTANT]
 
-Se o projeto veio do Windows para o Linux (Debian/Ubuntu/Pop!\_OS), primeiro instale o pacote de sistema necessário:
+#### **Passo a Passo (Configuração)**
 
-```bash
-sudo apt update
-sudo apt install python3.12-venv
-```
+1. **Vá para a raiz do projeto:**
 
-Se o projeto veio do Windows para o Linux, você deve reconstruir o ambiente:
+   ```bash
+   cd /home/paulolemos/testes-estágio-intuitive_care
+   ```
 
-```bash
-cd /home/paulolemos/testes-estágio-intuitive_care
-rm -rf venv               # Remove a venv incompatível
-python3 -m venv venv       # Cria a venv nativa Linux
-source venv/bin/activate   # Ativa
-cd Integração-API-publica/04-Interface/BackEnd
-pip install -r requirements.txt
-```
+2. **Crie e ative o ambiente virtual:**
+   - **No Linux:**
+     ```bash
+     python3 -m venv venv
+     source venv/bin/activate
+     ```
+   - **No Windows (PowerShell/CMD):**
+     ```powershell
+     python -m venv venv
+     .\venv\Scripts\activate
+     ```
 
-#### **B. Como rodar no dia a dia**
-
-Uma vez que o ambiente Linux foi criado, você só precisa ativá-lo ao abrir um novo terminal:
-
-```bash
-# 1. Ativar (na raiz do projeto)
-cd /home/paulolemos/testes-estágio-intuitive_care
-source venv/bin/activate
-
-# 2. Rodar (na pasta do Backend)
-cd Integração-API-publica/04-Interface/BackEnd
-uvicorn main:app --reload
-```
+3. **Instale as dependências e rode:**
+   ```bash
+   cd Integração-API-publica/04-Interface/BackEnd
+   pip install -r requirements.txt
+   uvicorn main:app --reload
+   ```
 
 Documentação interativa (Swagger): [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 
@@ -85,7 +80,7 @@ npx serve -s dist
 ```
 
 Acesso local (Desenv): [http://localhost:8080](http://localhost:8080)
-Acesso local (Produção): [http://localhost:3000](http://localhost:3000) (ou porta indicada pelo `serve`)
+Acesso local (Produção): [http://localhost:3000](http://localhost:3000)
 
 ## 4. Decisões Técnicas e Trade-offs
 
