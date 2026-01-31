@@ -6,7 +6,6 @@ import re
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 
-# Configurações
 BASE_URL = "https://dadosabertos.ans.gov.br/FTP/PDA/demonstracoes_contabeis/"
 TEMP_DIR = "temp-file"
 OUTPUT_FILE = "consolidado_despesas.csv"
@@ -18,7 +17,7 @@ def get_latest_zips(limit=3):
     try:
         response = requests.get(BASE_URL, timeout=30)
         soup = BeautifulSoup(response.text, 'html.parser')
-        # Filtra anos (diretórios numéricos)
+
         years = [urljoin(BASE_URL, a['href']) for a in soup.find_all('a') 
                  if a['href'].endswith('/') and a['href'].strip('/').isdigit()]
         
@@ -27,11 +26,9 @@ def get_latest_zips(limit=3):
             print(f"Verificando ano: {year_url}")
             resp = requests.get(year_url, timeout=30)
             s = BeautifulSoup(resp.text, 'html.parser')
-            # Busca arquivos zip que seguem o padrão QT YYYY
             zips = [urljoin(year_url, a['href']) for a in s.find_all('a') 
                     if a['href'].lower().endswith('.zip') and re.search(r'[1-4]\s?T', a['href'].upper())]
-            
-            # Ordena zips do ano decrescente (ex: 4T, 3T...)
+        
             target_zips.extend(sorted(zips, reverse=True))
             if len(target_zips) >= limit:
                 break
@@ -67,10 +64,8 @@ def process_file(file_path, source_url):
         return None
 
     try:
-        # Extração melhorada do Trimestre e Ano
         context_text = (source_url + "_" + os.path.basename(file_path)).upper()
         
-        # Busca Trimestre (XT ou /X/) e Ano (4 dígitos)
         tri_match = re.search(r'([1-4])\s?T|/([1-4])/', context_text)
         ano_match = re.search(r'(20\d{2})', context_text)
         
@@ -87,8 +82,7 @@ def process_file(file_path, source_url):
             return None
         
         df.columns = [str(c).upper().strip() for c in df.columns]
-
-        # Mapeamento dinâmico de colunas
+        
         col_id = next((c for c in df.columns if any(x in c for x in ['CNPJ', 'REG_ANS', 'ID_OPERADORA'])), None)
         col_desc = next((c for c in df.columns if any(x in c for x in ['DESC', 'RAZAO', 'NOME', 'CONTA'])), None)
         col_valor = next((c for c in df.columns if any(x in c for x in ['VALOR', 'VL_SALDO', 'VL_EVENTO'])), None)

@@ -112,116 +112,222 @@ onMounted(async () => {
 
 <style scoped>
 .details-container {
-  padding: 20px 0 40px;
-  max-width: 900px;
+  padding: 24px 0 48px;
+  max-width: 1000px;
   margin: 0 auto;
+  animation: fadeIn 0.4s ease;
 }
 
 .loading-state, .error-state, .empty-despesas {
   text-align: center;
-  padding: 60px 0;
-  color: var(--text-color);
-  opacity: 0.7;
+  padding: 80px 0;
+  color: var(--text-secondary);
+  font-weight: 500;
 }
 
-.error-state p { color: #e53e3e; margin-bottom: 20px; }
+.error-state p { 
+  color: #ef4444;
+  margin-bottom: 24px;
+  font-weight: 600;
+}
 
-.header-actions { margin-bottom: 20px; }
+.header-actions { 
+  margin-bottom: 24px;
+}
 
 .btn-back {
   background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  padding: 8px 16px;
-  border-radius: 8px;
+  border: 2px solid var(--border-color);
+  padding: 10px 20px;
+  border-radius: 10px;
   cursor: pointer;
   color: var(--text-color);
   display: flex;
   align-items: center;
-  gap: 8px;
-  transition: all 0.2s;
+  gap: 10px;
+  transition: all 0.2s ease;
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
 }
 
 .btn-back:hover {
   border-color: var(--primary-color);
   color: var(--primary-color);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-back:active {
+  transform: translateY(0);
 }
 
 .detail-card {
   background: var(--card-bg);
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  border-radius: 16px;
+  box-shadow: var(--shadow-xl);
   border: 1px solid var(--border-color);
   overflow: hidden;
-  margin-bottom: 30px;
+  margin-bottom: 32px;
+  backdrop-filter: blur(20px);
+  transition: all 0.3s ease;
+}
+
+.detail-card:hover {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
 }
 
 .card-header {
-  padding: 25px 30px;
+  padding: 32px 36px;
   background: var(--table-header-bg);
   border-bottom: 1px solid var(--border-color);
+  backdrop-filter: blur(10px);
 }
 
-.card-header h1 { margin: 10px 0 0; font-size: 1.5rem; color: var(--text-color); }
+.card-header h1 { 
+  margin: 12px 0 0;
+  font-size: 1.75rem;
+  color: var(--text-color);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
 
 .status-badge {
   display: inline-block;
-  background: #e6f7ef;
-  color: #2d8a61;
-  padding: 4px 10px;
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  color: #065f46;
+  padding: 6px 14px;
   border-radius: 50px;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: var(--shadow-sm);
 }
 
-.card-body { padding: 30px; }
+.card-body { 
+  padding: 36px;
+}
 
 .info-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 25px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 28px;
 }
 
 .info-item label {
   display: block;
   font-size: 0.75rem;
-  color: var(--text-color);
-  opacity: 0.6;
+  color: var(--text-secondary);
   text-transform: uppercase;
   font-weight: 700;
-  margin-bottom: 5px;
+  margin-bottom: 6px;
+  letter-spacing: 0.05em;
 }
 
-.info-item p { font-size: 1.1rem; font-weight: 600; color: var(--text-color); margin: 0; }
+.info-item p { 
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--text-color);
+  margin: 0;
+}
 
 .uf-tag {
-  background: var(--table-header-bg);
+  background: linear-gradient(135deg, var(--table-header-bg) 0%, var(--border-color) 100%);
   color: var(--primary-color);
-  padding: 2px 10px;
-  border-radius: 6px;
-  font-size: 0.9rem;
+  padding: 4px 12px;
+  border-radius: 8px;
+  font-size: 0.95rem;
   font-weight: 700;
   border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
 }
 
 .despesas-section {
   background: var(--card-bg);
-  border-radius: 12px;
-  padding: 30px;
+  border-radius: 16px;
+  padding: 36px;
   border: 1px solid var(--border-color);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  box-shadow: var(--shadow-xl);
+  backdrop-filter: blur(20px);
+  transition: all 0.3s ease;
 }
 
-.despesas-section h3 { margin: 0; color: var(--text-color); }
-.section-desc { font-size: 0.9rem; opacity: 0.7; margin: 5px 0 20px; }
+.despesas-section:hover {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
 
-.despesas-table-wrapper { border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; }
+.despesas-section h3 { 
+  margin: 0;
+  color: var(--text-color);
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
 
-.despesas-table { width: 100%; border-collapse: collapse; }
-.despesas-table th { background: var(--table-header-bg); padding: 12px 20px; text-align: left; font-size: 0.85rem; font-weight: 600; }
-.despesas-table td { padding: 12px 20px; border-top: 1px solid var(--border-color); font-size: 0.95rem; }
-.despesas-table tbody tr:hover { background: var(--table-row-hover); }
+.section-desc { 
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  margin: 6px 0 24px;
+  font-weight: 500;
+}
 
-.text-right { text-align: right; }
-.bold { font-weight: 600; }
+.despesas-table-wrapper { 
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.despesas-table { 
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.despesas-table th { 
+  background: var(--table-header-bg);
+  padding: 14px 24px;
+  text-align: left;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+}
+
+.despesas-table td { 
+  padding: 14px 24px;
+  border-top: 1px solid var(--border-color);
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.despesas-table tbody tr {
+  transition: all 0.2s ease;
+}
+
+.despesas-table tbody tr:hover { 
+  background: var(--table-row-hover);
+  transform: scale(1.005);
+}
+
+.text-right { 
+  text-align: right;
+}
+
+.bold { 
+  font-weight: 700;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 </style>

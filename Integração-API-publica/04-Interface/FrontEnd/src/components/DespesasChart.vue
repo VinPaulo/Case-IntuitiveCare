@@ -106,8 +106,10 @@ onMounted(async () => {
         labels: data.map(d => d.uf),
         datasets: [{
           label: 'Total de Despesas',
-          backgroundColor: '#42b983',
-          borderRadius: 6,
+          backgroundColor: 'rgba(16, 185, 129, 0.8)',
+          hoverBackgroundColor: 'rgba(16, 185, 129, 1)',
+          borderRadius: 8,
+          borderSkipped: false,
           data: data.map(d => d.total_despesa)
         }]
       }
@@ -127,40 +129,79 @@ onUnmounted(() => {
 <style scoped>
 .card {
   background: var(--card-bg);
-  padding: 30px;
-  border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-  margin-top: 20px;
+  padding: 36px;
+  border-radius: 16px;
+  box-shadow: var(--shadow-xl);
+  margin-top: 24px;
   border: 1px solid var(--border-color);
+  backdrop-filter: blur(20px);
+  animation: fadeIn 0.4s ease;
+  transition: all 0.3s ease;
 }
-.card-header { text-align: center; margin-bottom: 25px; }
-.chart-title { margin: 0; color: var(--text-color); font-size: 1.5rem; }
-.chart-subtitle { margin: 5px 0 0; color: var(--text-color); opacity: 0.6; font-size: 0.9rem; }
+
+.card:hover {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.card-header { 
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.chart-title { 
+  margin: 0;
+  color: var(--text-color);
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.chart-subtitle { 
+  margin: 8px 0 0;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  font-weight: 500;
+}
 
 .chart-container {
-  height: 450px;
+  height: 500px;
   width: 100%;
+  position: relative;
 }
+
 .loading-state {
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   height: 100%;
-  color: #888;
-  gap: 15px;
+  color: var(--text-secondary);
+  gap: 20px;
+  font-weight: 500;
 }
 
 .spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid rgba(66, 185, 131, 0.1);
-  border-left-color: #42b983;
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(16, 185, 129, 0.1);
+  border-left-color: var(--primary-color);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>
